@@ -1,0 +1,155 @@
+<?php
+
+require_once 'Category.php';
+
+class Product {
+    private ?int $id;
+    private ?string $name;
+    private ?array $photos;
+    private ?int $price;
+    private ?string $description;
+    private ?int $quantity;
+    private ?DateTime $createdAt;
+    private ?DateTime $updatedAt;
+    private ?int $category_id;
+
+    public function __construct(
+        ?int $id = null,
+        ?string $name = null,
+        ?array $photos = null,
+        ?int $price = null,
+        ?string $description = null,
+        ?int $quantity = null,
+        ?DateTime $createdAt = null,
+        ?DateTime $updatedAt = null,
+        ?int $category_id = null
+    ) {
+        $this->id = $id;
+        $this->name = $name;
+        $this->photos = $photos;
+        $this->price = $price;
+        $this->description = $description;
+        $this->quantity = $quantity;
+        $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
+        $this->category_id = $category_id;
+    }
+
+    public function getId(): ?int {
+        return $this->id;
+    }
+
+    public function setId(?int $id): void {
+        $this->id = $id;
+    }
+
+    public function getName(): ?string {
+        return $this->name;
+    }
+
+    public function setName(?string $name): void {
+        $this->name = $name;
+    }
+
+    public function getPhotos(): ?array {
+        return $this->photos;
+    }
+
+    public function setPhotos(?array $photos): void {
+        $this->photos = $photos;
+    }
+
+    public function getPrice(): ?int {
+        return $this->price;
+    }
+
+    public function setPrice(?int $price): void {
+        $this->price = $price;
+    }
+
+    public function getDescription(): ?string {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): void {
+        $this->description = $description;
+    }
+
+    public function getQuantity(): ?int {
+        return $this->quantity;
+    }
+
+    public function setQuantity(?int $quantity): void {
+        $this->quantity = $quantity;
+    }
+
+    public function getCreatedAt(): ?DateTime {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?DateTime $createdAt): void {
+        $this->createdAt = $createdAt;
+    }
+
+    public function getUpdatedAt(): ?DateTime {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?DateTime $updatedAt): void {
+        $this->updatedAt = $updatedAt;
+    }
+
+    public function getCategoryId(): ?int {
+        return $this->category_id;
+    }
+
+    public function setCategoryId(?int $category_id): void {
+        $this->category_id = $category_id;
+    }
+
+    //retourne une instance de Category liée via category_id, ou false si non trouvée
+    public function getCategory() {
+        if ($this->category_id === null) {
+            return false;
+        }
+
+        // Connexion PDO minimale
+        $host = 'localhost';
+        $port = '3306';
+        $db   = 'draft-shop';
+        $user = 'root';
+        $pass = '';
+        $charset = 'utf8mb4';
+
+        $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
+
+        try {
+            $pdo = new PDO($dsn, $user, $pass, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+        } catch (PDOException $e) {
+            return false;
+        }
+
+        $stmt = $pdo->prepare('SELECT * FROM category WHERE id = :id');
+        $stmt->execute(['id' => $this->category_id]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return false;
+        }
+
+        // Hydrater et retourner une instance de Category
+        $createdAt = !empty($row['createdAt']) ? new DateTime($row['createdAt']) : null;
+        $updatedAt = !empty($row['updatedAt']) ? new DateTime($row['updatedAt']) : null;
+
+        return new Category(
+            isset($row['id']) ? (int)$row['id'] : null,
+            $row['name'] ?? null,
+            $row['description'] ?? null,
+            $createdAt,
+            $updatedAt
+        );
+    }
+}
